@@ -64,7 +64,6 @@ if(1 == count($argv) || '' == $argv[1] || empty($argv[1]))
 
 $fdata = $argv[1];
 $datadir = $argv[2];
-
 $participant_list = array();
 $file = fopen($fdata,'r');
 if(false === $file)
@@ -75,8 +74,6 @@ if(false === $file)
 
 $line = NULL;
 $line_count = 0;
-$nlerr = 0;
-
 while(false !== ($line = fgets($file)))
 {
   $line_count++;
@@ -88,9 +85,9 @@ while(false !== ($line = fgets($file)))
 }
 fclose($file);
 
-// for each UID, download the xml file
-$err_count=0;
-foreach($participant_list as $uid=>$barcode)
+// for each UID, read the xml file
+$err_count = 0;
+foreach($participant_list as $uid => $barcode)
 {
   $filename = $datadir . '/' . $uid . '.xml';
   if(!file_exists($filename))
@@ -110,7 +107,9 @@ foreach($participant_list as $uid=>$barcode)
   }
 }
 
-if(0 == $err_count) util::out('no errors');
-else util::out('found ' . $err_count . ' errors in ' . count($participant_list) . ' files');
+if(0 == $err_count)
+  util::out('no errors');
+else
+  util::out('found ' . $err_count . ' errors in ' . count($participant_list) . ' files');
 
 ?>
