@@ -1,7 +1,8 @@
 <?php
 
-require_once( 'phplot-6.2.0/phplot.php' );
-require_once( 'util.class.php' );
+$util_path = '../../../php_util/';
+require_once( $util_path . 'phplot-6.2.0/phplot.php' );
+require_once( $util_path . 'util.class.php' );
 util::initialize();
 
 function xml_attribute($object, $attribute)
@@ -70,13 +71,15 @@ $group_xml['sagittal']=
     'axes'=>array('-Z','-Y')
     );
 
-  // get the sampling conversion from uVperLsb to mV  
+  // get the sampling conversion from uVperLsb to mV
+  //
   $path = $pqrst_xml['root'] . '/' . $pqrst_xml['res'];
   $data = current($simple_xml_obj->xpath('//' . $path));
   $y_resolution = $data->__toString();
   $y_resolution = $y_resolution / 1000.0;
 
   // get the axis values for the planes
+  //
   $axis_values=array();
   foreach($group_xml as $plane=>$values)
   {
@@ -86,7 +89,7 @@ $group_xml['sagittal']=
     {
       $attr = xml_attribute($data, $values['id']);
       $axis_values[$attr] = explode(',', preg_replace('/\s+/', '', $data->__toString()));
-      for($i=0;$i<count($axis_values[$attr]); $i++) $axis_values[$attr][$i] *= $y_resolution;
+      for($i = 0;$i < count($axis_values[$attr]); $i++) $axis_values[$attr][$i] *= $y_resolution;
     }
   }
 
