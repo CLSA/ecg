@@ -1,7 +1,10 @@
 <?php
 
-require_once( 'phplot-6.2.0/phplot.php' );
-require_once( 'util.class.php' );
+$util_path = '/home/dean/files/repository/php_util/';
+$ttf_path = $util_path . 'fonts/msttcorefonts';
+
+require_once( $util_path . 'phplot-6.2.0/phplot.php' );
+require_once( $util_path . 'util.class.php' );
 util::initialize();
 
 function xml_attribute($object, $attribute)
@@ -22,9 +25,16 @@ $infile = $argv[1];
 $simple_xml_obj = simplexml_load_file( $infile );
 
 $verbose = true;
-$optimize_voltage_scale = false; // compute voltage scale to prevent peak overlaps between rows
-$optimize_voltage_scale_nesting = false; // compute voltage scale to prevent peak overlaps and nesting between rows
-$optimize_row_scale = true; // adjust row spacing for best non-uniform converage
+// compute voltage scale to prevent peak overlaps between rows
+//
+$optimize_voltage_scale = false;
+// compute voltage scale to prevent peak overlaps and nesting between rows
+//
+$optimize_voltage_scale_nesting = false;
+// adjust row spacing for best non-uniform converage
+//
+$optimize_row_scale = true;
+$anonymize = true;
 
 function scaleFunc(&$value, $key, $scale)
 {
@@ -68,7 +78,7 @@ function plotEmptyBox(&$plot, $pixel_area)
   $plot->SetYTickLabelPos('none');
   $plot->SetXTickPos('none');
   $plot->SetYTickPos('none');
-  $plot->SetPointSizes(1); // in pixels
+  $plot->SetPointSizes(1);
   $plot->SetLineWidths(1);
 
   $plot->SetPlotAreaPixels(
@@ -140,18 +150,24 @@ $strip_xml =
     util::out('cannot find ' . $path);
     die();
   }
+
   // lead sampling rate in Hz
+  //
   $rate = $strip_xml['rate'];
   if(!is_null($rate))
   {
     $rate = current($simple_xml_obj->xpath('//' . $strip_xml['root'] . '/' . $rate));
   }
-  $dt = is_null($rate) ? 1.0 : 1.0/floatval($rate); // seconds per sample
+  // seconds per sample
+  //
+  $dt = is_null($rate) ? 1.0 : 1.0/floatval($rate);
   util::out('sampling rate = ' . $dt . ' sec' );
 
-  // default file name
   $title = $strip_xml['root'] . '/' . $strip_xml['data'];
-  $outfile = str_replace('/', '_', $title) . '.jpg';
+
+  // default file name
+  //
+  $outfile = str_replace('.xml', '.jpg', $infile);
   if(3 == count($argv) && !empty($argv[2]))
   {
     $outfile = $argv[2];
@@ -171,8 +187,10 @@ $strip_xml =
   foreach($match as $data)
   {
     // lead label
+    //
     $attr = xml_attribute($data, $strip_xml['id']);
     // lead voltages
+    //
     $ydata = explode(',', preg_replace('/\s+/', '', $data->__toString()));
 
     if($verbose)
@@ -209,11 +227,13 @@ $strip_xml =
   // x direction corresponds to a quarter of the time
   // plotted along the continuous lead II plot in the
   // bottom row.
+  //
   $num_plot_u = 4;
   $num_plot_v = 4;
 
   // the background mm resolution grid for time and voltage
   // each block is 5 mm
+  //
   $x_num_block = 56;
   $y_num_block = 31;
   $block_resolution_mm = 5;
@@ -255,6 +275,7 @@ $strip_xml =
   foreach($plot_columns as $col=>$column)
   {
     // get the min and max for the current range of values
+    //
     $row = 3;
     if(!array_key_exists($row,$row_min))
     {
@@ -353,6 +374,7 @@ $strip_xml =
       range(2*$block_resolution_mm, 4*$block_resolution_mm, 1);
 
     // do a fast check using no nesting
+    //
     foreach($base_offsets as $base_offset)
     {
       $test_y_offset = intval($base_offset);
@@ -497,7 +519,8 @@ $strip_xml =
   util::out('plotting rates: ' . $x_plot_rate . ' mm/s, ' . $y_plot_rate . ' mm/mV');
 
   // plot lead II
-  $du = $num_time_per_plot * $dt * $x_plot_rate;  // mm
+  //
+  $du = $num_time_per_plot * $dt * $x_plot_rate; // mm
   $dv = $default_dv;
 
   util::out('row spacing: ' . $y_offset_default . ' mm (lead II) ' . $dv . ' mm');
@@ -508,6 +531,7 @@ $strip_xml =
   $y_offset = $y_offset_default;
 
   // plot lead II along the bottom row entirely
+  //
   $xy_values = array();
   for($i = 0 ; $i < count($x_values); $i++)
   {
@@ -578,7 +602,7 @@ $strip_xml =
   $text_total_mm = 55; // mm
   $dpi = 300;
 
-  $resolution = $dpi / 25.4;  //pixels per mm
+  $resolution = $dpi / 25.4; //pixels per mm
   $width_total = intval(round($x_total_mm * $resolution,0));
   $height_grid = intval(round($y_total_mm * $resolution,0));
   $height_text = intval(round($text_total_mm * $resolution,0));
@@ -587,6 +611,7 @@ $strip_xml =
   $num_xticks = $x_total_mm;
 
   // final image size and partitionings
+  //
   $height_plot = intval(round($y_total_mm * $resolution / $num_plot_v,0));
   $height_total = $height_text + $height_grid;
 
@@ -594,6 +619,7 @@ $strip_xml =
   $strip_height = intval(round($strip_mm * $resolution,0));
 
   // setup the grid plots with no axes labels or ticks
+  //
   $plot = new PHPlot($width_total, $height_total + $strip_height);
   $plot->SetPrintImage(0);
   $plot->SetIsInline(true);
@@ -610,7 +636,8 @@ $strip_xml =
   $plot->SetDrawYAxis(false);
 
   // set the font size to work with our dpi resolution
-  $plot->SetTTFPath('/usr/share/fonts/truetype/msttcorefonts');
+  //
+  $plot->SetTTFPath($ttf_path);
   $plot->SetFontTTF('title','Verdana.ttf',34);
   $plot->SetFontTTF('legend','Verdana.ttf',28);
 
@@ -622,6 +649,7 @@ $strip_xml =
   $plot->SetPlotAreaWorld(0, 0, $x_total_mm, $y_total_mm);
 
   // draw a red background grid
+  //
   $plot->SetLineWidths(1);
   $plot->SetXTickIncrement( 1 );
   $plot->SetYTickIncrement( 1 );
@@ -633,6 +661,7 @@ $strip_xml =
   $plot->DrawGraph();
 
   // draw the course grid
+  //
   $plot->SetLineWidths(2);
   $plot->SetDrawXGrid(false);
   $plot->SetDrawYGrid(false);
@@ -656,6 +685,7 @@ $strip_xml =
   }
 
   // overlay waveform plots on the background grid
+  //
   $plot->SetDrawXGrid(false);
   $plot->SetDrawYGrid(false);
   $plot->SetDrawPlotAreaBackground(false);
@@ -677,6 +707,7 @@ $strip_xml =
   }
 
   // text components
+  //
   $plot->SetDrawPlotAreaBackground(true);
 
   $group_data = array();
@@ -732,6 +763,10 @@ $strip_xml =
     util::flatten(array_values($datekeys),'.') . ' ' .
     util::flatten(array_values($timekeys),':');
   $pid_str = current($group_data['patient']['PID']['value']);
+  if($anonymize)
+  {
+    $pid_str = '';
+  }
   $rate_str = current($group_data['measurements']['VentricularRate']['value']);
 
   $pixel_area = array(
@@ -750,7 +785,7 @@ $strip_xml =
   $str = $spc . $date_str . "\n" . $spc . $pid_str . "\n" . $spc . $rate_str;
 
   // diagnosis
-
+  //
   foreach($group_data['diagnosis']['DiagnosisText']['value'] as $diag_str)
   {
     $str .= "\n";
@@ -765,7 +800,7 @@ $strip_xml =
   // P: PDuration ms
   // RR / PP: RRInterval / PPInterval ms
   // P / QRS / T: PAxis / RAxis / TAxis degrees
-
+  //
   $xoffset = 0.7 * $width_total;
   $str =
     'QRS ' . "\n" . 'QT / QTcBaz ' . "\n" .
@@ -800,6 +835,7 @@ $strip_xml =
   $plot->DrawText('title', 0, $xoffset, $yoffset, $black, $str, 'left', 'top');
 
   // bottom strip text
+  //
   $pixel_area = array(
     'x0'=>0, 'y0'=>($height_total+1), 'x1'=>$width_total, 'y1'=>($height_total + $strip_height));
   plotEmptyBox($plot,$pixel_area);
